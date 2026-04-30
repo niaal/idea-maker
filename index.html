@@ -1,0 +1,361 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Idea Maker — AI Hackathon</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght,SOFT@9..144,300..900,0..100&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #111;
+    --paper: #f4efe6;
+    --rule: #11111122;
+    --accent: #d94a1f;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; }
+  body {
+    background: var(--paper);
+    color: var(--ink);
+    font-family: 'JetBrains Mono', ui-monospace, monospace;
+    font-size: 14px;
+    line-height: 1.5;
+    display: flex;
+    flex-direction: column;
+    min-height: 100vh;
+    padding: 32px clamp(20px, 4vw, 64px);
+  }
+  header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    border-bottom: 1px solid var(--rule);
+    padding-bottom: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-size: 11px;
+  }
+  header .lockup { font-weight: 500; }
+  header .meta { opacity: 0.55; }
+
+  main {
+    flex: 1;
+    display: grid;
+    grid-template-rows: 1fr auto;
+    padding: clamp(24px, 6vh, 80px) 0 24px;
+    gap: 40px;
+  }
+
+  .stage {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: 0;
+  }
+  .label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    opacity: 0.55;
+    margin-bottom: 24px;
+  }
+  .idea {
+    font-family: 'Fraunces', Georgia, serif;
+    font-weight: 360;
+    font-style: normal;
+    font-variation-settings: "opsz" 144, "SOFT" 30;
+    font-size: clamp(34px, 6.5vw, 84px);
+    line-height: 1.05;
+    letter-spacing: -0.02em;
+    max-width: 22ch;
+    transition: opacity 220ms ease;
+  }
+  .idea .pivot {
+    font-style: italic;
+    color: var(--accent);
+    font-variation-settings: "opsz" 144, "SOFT" 100;
+  }
+  .idea.is-loading { opacity: 0.15; }
+
+  .actions {
+    margin-top: 32px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+  }
+  .ghost {
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    font: inherit;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    padding: 10px 16px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .ghost:hover { border-color: var(--ink); background: var(--ink); color: var(--paper); }
+  .copy-status {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    opacity: 0;
+    transition: opacity 160ms ease;
+  }
+  .copy-status.is-visible { opacity: 0.7; }
+
+  .footnote {
+    margin-top: 28px;
+    font-size: 12px;
+    opacity: 0.55;
+    max-width: 60ch;
+  }
+
+  .controls {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    gap: 24px;
+    align-items: end;
+    border-top: 1px solid var(--rule);
+    padding-top: 24px;
+  }
+  .field { display: flex; flex-direction: column; gap: 8px; }
+  .field-label {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    opacity: 0.55;
+  }
+  .chip-row { display: flex; flex-wrap: wrap; gap: 6px; }
+  .chip {
+    appearance: none;
+    background: transparent;
+    border: 1px solid var(--rule);
+    color: var(--ink);
+    font: inherit;
+    font-size: 12px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .chip:hover { border-color: var(--ink); }
+  .chip[aria-pressed="true"] {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+
+  .generate {
+    appearance: none;
+    background: var(--ink);
+    color: var(--paper);
+    font: inherit;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.18em;
+    padding: 16px 28px;
+    border: none;
+    cursor: pointer;
+    transition: transform 80ms ease;
+  }
+  .generate:hover { background: var(--accent); }
+  .generate:active { transform: translateY(1px); }
+
+  footer {
+    border-top: 1px solid var(--rule);
+    padding-top: 14px;
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    opacity: 0.55;
+  }
+
+  @media (max-width: 720px) {
+    .controls { grid-template-columns: 1fr; }
+    .generate { width: 100%; }
+  }
+</style>
+</head>
+<body>
+  <header>
+    <div class="lockup">Idea Makertron</div>
+    <div class="meta">AI Hackathon · 3 hours · 1 idea</div>
+  </header>
+
+  <main>
+    <section class="stage">
+      <div class="label">Build something that —</div>
+      <h1 class="idea" id="idea">Press generate.</h1>
+      <div class="actions">
+        <button class="ghost" id="copy" type="button">Copy for Slack</button>
+        <span class="copy-status" id="copyStatus" aria-live="polite"></span>
+      </div>
+      <p class="footnote" id="footnote">Two knobs. One idea. Re-roll until something makes you laugh, then build it.</p>
+    </section>
+
+    <section class="controls">
+      <div class="field">
+        <div class="field-label">Who's building</div>
+        <div class="chip-row" id="role-row" role="radiogroup" aria-label="Role">
+          <button class="chip" data-role="any" aria-pressed="true">Any</button>
+          <button class="chip" data-role="designer" aria-pressed="false">Designer</button>
+          <button class="chip" data-role="developer" aria-pressed="false">Developer</button>
+          <button class="chip" data-role="pm" aria-pressed="false">PM</button>
+          <button class="chip" data-role="leader" aria-pressed="false">Senior</button>
+          <button class="chip" data-role="mixed" aria-pressed="false">Mixed team</button>
+        </div>
+      </div>
+
+      <div class="field">
+        <div class="field-label">Vibe</div>
+        <div class="chip-row" id="vibe-row" role="radiogroup" aria-label="Vibe">
+          <button class="chip" data-vibe="any" aria-pressed="true">Any</button>
+          <button class="chip" data-vibe="useful" aria-pressed="false">Actually useful</button>
+          <button class="chip" data-vibe="playful" aria-pressed="false">Playful</button>
+          <button class="chip" data-vibe="weird" aria-pressed="false">Weird</button>
+          <button class="chip" data-vibe="ambitious" aria-pressed="false">Ambitious</button>
+        </div>
+      </div>
+
+      <button class="generate" id="generate">Generate ↻</button>
+    </section>
+  </main>
+
+  <footer>
+    <span>Made for the studio</span>
+    <span id="seed">—</span>
+  </footer>
+
+<script>
+// ---------- encoded payload ----------
+// Pools + role tails are XOR-encoded against a key, then base64. Decoded once at load.
+// Not a security boundary; just stops casual "View Source" peeking.
+const _K = "idea-maker-2026-do-not-peek-please-and-thank-you";
+const _B = "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";
+
+function _decodePayload() {
+  const bin = atob(_B);
+  const bytes = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  const keyBytes = new TextEncoder().encode(_K);
+  const out = new Uint8Array(bytes.length);
+  for (let i = 0; i < bytes.length; i++) out[i] = bytes[i] ^ keyBytes[i % keyBytes.length];
+  return JSON.parse(new TextDecoder().decode(out));
+}
+
+const { POOLS, ROLE_TAILS } = _decodePayload();
+
+// ---------- state ----------
+const state = { role: "any", vibe: "any", current: null };
+const ideaEl = document.getElementById("idea");
+const seedEl = document.getElementById("seed");
+const copyBtn = document.getElementById("copy");
+const copyStatusEl = document.getElementById("copyStatus");
+
+function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+
+function generate() {
+  const vibeKey = state.vibe === "any"
+    ? pick(Object.keys(POOLS))
+    : state.vibe;
+  const [verb, pivot, tail] = pick(POOLS[vibeKey]);
+  const roleTail = pick(ROLE_TAILS[state.role] || [""]);
+
+  state.current = { verb, pivot, tail, roleTail, vibe: vibeKey, role: state.role };
+
+  ideaEl.classList.add("is-loading");
+  setTimeout(() => {
+    ideaEl.innerHTML =
+      escapeHtml(verb) + " " +
+      '<span class="pivot">' + escapeHtml(pivot) + '</span> ' +
+      escapeHtml(tail) +
+      (roleTail ? ' <span style="opacity:0.55">' + escapeHtml(roleTail) + '</span>' : '');
+    ideaEl.classList.remove("is-loading");
+    seedEl.textContent = vibeKey + " · " + state.role + " · " + Math.random().toString(36).slice(2, 6);
+    setCopyStatus("");
+  }, 120);
+}
+
+function formatForSlack(idea) {
+  if (!idea) return "";
+  const sentence = `Build something that ${idea.verb} _${idea.pivot}_ ${idea.tail}`.replace(/\s+/g, " ").trim();
+  const tail = idea.roleTail ? ` ${idea.roleTail}` : "";
+  const tag = `_${idea.vibe} · ${idea.role}_`;
+  return `:sparkles: *Idea Maker rolled:*\n> ${sentence}${tail}\n${tag}`;
+}
+
+async function copyIdea() {
+  if (!state.current) return;
+  const text = formatForSlack(state.current);
+  try {
+    await navigator.clipboard.writeText(text);
+    setCopyStatus("Copied — paste into Slack");
+  } catch {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand("copy"); setCopyStatus("Copied — paste into Slack"); }
+    catch { setCopyStatus("Couldn't copy — select and copy manually"); }
+    document.body.removeChild(ta);
+  }
+}
+
+let copyStatusTimer;
+function setCopyStatus(msg) {
+  clearTimeout(copyStatusTimer);
+  copyStatusEl.textContent = msg;
+  copyStatusEl.classList.toggle("is-visible", Boolean(msg));
+  if (msg) copyStatusTimer = setTimeout(() => setCopyStatus(""), 2400);
+}
+
+function escapeHtml(s) {
+  return s.replace(/[&<>"']/g, c => ({
+    "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;"
+  }[c]));
+}
+
+function wireRow(rowId, key) {
+  const row = document.getElementById(rowId);
+  row.addEventListener("click", e => {
+    const btn = e.target.closest(".chip");
+    if (!btn) return;
+    row.querySelectorAll(".chip").forEach(c => c.setAttribute("aria-pressed", "false"));
+    btn.setAttribute("aria-pressed", "true");
+    state[key] = btn.dataset[key];
+    generate();
+  });
+}
+
+wireRow("role-row", "role");
+wireRow("vibe-row", "vibe");
+document.getElementById("generate").addEventListener("click", generate);
+copyBtn.addEventListener("click", copyIdea);
+document.addEventListener("keydown", e => {
+  const isModC = (e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "c";
+  if (isModC && window.getSelection && String(window.getSelection()) === "") {
+    e.preventDefault();
+    copyIdea();
+    return;
+  }
+  if (e.key === " " || e.key === "Enter") {
+    if (document.activeElement.tagName === "BUTTON") return;
+    e.preventDefault();
+    generate();
+  }
+});
+
+generate();
+</script>
+</body>
+</html>
